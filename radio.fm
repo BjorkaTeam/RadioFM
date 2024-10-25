@@ -1,0 +1,226 @@
+from flask import Flask
+
+app = Flask(__name__)
+@app.route("/")
+def index():
+    return """
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Custom Web Radio Player</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #121212;
+            color: #ffffff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        nav {
+            width: 100%;
+            background-color: #1e1e1e;
+            padding: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+        }
+        .nav-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #ffffff;
+        }
+        input[type="search"] {
+            padding: 10px;
+            border-radius: 5px;
+            border: none;
+            background-color: #333;
+            color: #fff;
+            font-size: 16px;
+            width: 250px;
+        }
+        .player-container {
+            background-color: #1e1e1e;
+            border-radius: 15px;
+            padding: 20px;
+            width: 350px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+            margin-top: 20px;
+        }
+        .radio-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 20px;
+        }
+        .custom-audio-controls {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .playstop-button {
+            padding: 10px;
+            font-size: 20px;
+            border: none;
+            border-radius: 5px;
+            background-color: #6200ea;
+            color: white;
+            cursor: pointer;
+            margin: 0 5px;
+            transition: background-color 0.3s;
+            width: 50px;
+            height: 50px;
+        }
+        .playstop-button:hover {
+            background-color: #3700b3;
+        }
+        .volume-slider {
+            width: 100%;
+            margin: 0 10px;
+            background: #333;
+        }
+        .footer {
+            margin-top: 10px;
+            font-size: 12px;
+            color: #888;
+        }
+        .search-results {
+            margin: 10px 0;
+            font-size: 14px;
+            color: #e0e0e0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            max-height: 150px;
+            overflow-y: auto;
+        }
+        .result-item {
+            padding: 10px;
+            border: 1px solid #444;
+            border-radius: 5px;
+            width: 100%;
+            margin: 5px 0;
+            text-align: left;
+            transition: background-color 0.3s;
+            cursor: pointer;
+            background-color: #1a1a1a;
+        }
+        .result-item:hover {
+            background-color: #333;
+        }
+        select{
+            background: #333;
+            border: 1px solid white;
+            border-radius: 5px;
+            color: white;
+            margin-bottom: 10px;
+            padding: 8px;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="nav-title">ViRadio</div>
+        <input type="search" id="searchBar" placeholder="Search for a station..." onkeyup="filterStations()">
+    </nav>
+    
+    <div class="player-container">
+        <div class="radio-title">Custom Radio Player</div>
+        <select id="radioList" onchange="setStation()">
+            <option value="" disabled selected>Radio Channel</option>
+            <option value="https://hb.trolli.is/stream">Trolli Radio</option>
+            <option value="https://s2.radio.co/s97610a9e9/listen">Radio Co Stream</option>
+            <option value="https://diffusion.lafrap.fr/graffiti">Graffiti Radio</option>
+            <option value="https://s3.radio.co/sc8d895604/listen">Another Radio</option>
+            <option value="https://a13.siar.us/listen/dirgantarabali/stream?refresh=1665585345410">Dirgantara Bali</option>
+            <option value="https://cast3.asurahosting.com/proxy/radios25/stream">Asura Hosting Radio</option>
+            <option value="https://n0c.radiojar.com/4ywdgup3bnzuv?rj-ttl=5&rj-tok=AAABkrnYyCQA8_Etq4hPWVfrFw">Radio Jar</option>
+            <option value="https://radio.garden/visit/seribatu/Pgz-79vV">Radio Garden</option>
+            <option value="https://stream-node0.rri.co.id/streaming/21/9021/rridenpasarpro4.mp3">RRI Denpasar</option>
+            <option value="https://i.klikhost.com/8326/;stream">KlikHost Radio</option>
+            <option value="https://n03.radiojar.com/66zgtscuc1duv?rj-ttl=5&rj-tok=AAABkrnbV9cAntPiYskS8vIWMA">Radio Jar 2</option>
+            <option value="https://tannan.mediaservice.jp:7910/">Tannan Media Service</option>
+            <option value="https://gotanno.love:8443/">Gotanno Radio</option>
+            <option value="https://radioserver10.profesionalhosting.com:40972/stream">Profesional Hosting Radio</option>
+            <option value="https://live.radioarbali.com:8450/radioar">Radio Bali AR</option>
+            <option value="https://cast1.my-control-panel.com/proxy/radios12/stream">My Control Panel Radio</option>
+            <option value="https://streamasiacdn.atc-labs.com/valliapparadio.aac">Valliappa Radio</option>
+            <option value="https://stream-157.zeno.fm/epyhxgc1y8huv?zt=eyJhbGciOiJIUzI1NiJ9.eyJzdHJlYW0iOiJlcHloeGdjMXk4aHV2IiwiaG9zdCI6InN0cmVhbS0xNTcuemVuby5mbSIsInJ0dGwiOjUsImp0aSI6IkxlR3hIYU5UU0pLVkVxYVVmNExRU0EiLCJpYXQiOjE3Mjk2OTQ3OTQsImV4cCI6MTcyOTY5NDg1NH0.GK4qYSG3o6iW2WQ6gf1DHbMR2PTiYqPcluQfPrzeLH4">Zeno Radio</option>
+        </select>
+        
+        <div class="custom-audio-controls">
+            <button class="playstop-button" id="playStopButton" onclick="toggleAudio()">▶</button>
+            <input type="range" class="volume-slider" id="volumeSlider" min="0" max="1" step="0.01" value="0.5" oninput="setVolume(this.value)">
+        </div>
+        
+        <div class="search-results" id="searchResults"></div>
+        
+        <div class="footer">Select a station to play the stream in real-time.</div>
+    </div>
+
+    <script>
+        const audioPlayer = new Audio();
+const radioSelect = document.getElementById('radioList');
+const searchBar = document.getElementById('searchBar');
+const searchResults = document.getElementById('searchResults');
+const playStopButton = document.getElementById('playStopButton');
+
+let isPlaying = false;
+
+function setStation() {
+    const selectedRadio = radioSelect.value;
+    audioPlayer.src = selectedRadio;
+}
+
+function toggleAudio() {
+    if (audioPlayer.src) {
+        if (isPlaying) {
+            audioPlayer.pause();
+            playStopButton.textContent = '▶'; // Change to play symbol
+        } else {
+            audioPlayer.play();
+            playStopButton.textContent = '◼'; // Change to stop symbol
+        }
+        isPlaying = !isPlaying;
+    } else {
+        alert('Please select a radio station');
+    }
+}
+
+function setVolume(value) {
+    audioPlayer.volume = value;
+}
+
+function filterStations() {
+    const filter = searchBar.value.toLowerCase();
+    const options = radioSelect.options;
+    searchResults.innerHTML = '';
+
+    for (let i = 0; i < options.length; i++) {
+        const text = options[i].textContent.toLowerCase();
+        if (text.includes(filter) && filter !== "") {
+            const resultItem = document.createElement('div');
+            resultItem.className = 'result-item';
+            resultItem.textContent = options[i].textContent;
+            resultItem.onclick = () => {
+                radioSelect.value = options[i].value;
+                setStation();
+                toggleAudio();
+            };
+            searchResults.appendChild(resultItem);
+        }
+    }
+}
+</script>
+</body>
+</html>
+"""
+
+if __name__ == "__main__":    
+    app.run(host="0.0.0.0")
